@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/socket.h>
 #include "auth.h"
 
 void login(Player *player)

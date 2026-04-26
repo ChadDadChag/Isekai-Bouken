@@ -5,4 +5,4 @@
 
 void handle_armory(Player *player);
 
-#endif;
+#endif

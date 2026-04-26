@@ -15,6 +15,7 @@ typedef struct
     Role role;
     int hasSword;
     int hasStaff;
+    int hasSpear;
     char name[20];
 } Player;
 

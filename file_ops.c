@@ -25,7 +25,7 @@ void save_to_file(Player *player)
     fcntl(fd,F_SETLKW,&lock);
 
     char buffer[200];
-    snprintf(buffer,"Player %s won as role %d\n",player->name,player->role);
+    snprintf(buffer,sizeof(buffer),"Player %s won as role %d\n",player->name,player->role);
 
     write(fd,buffer,strlen(buffer));
 

@@ -50,7 +50,6 @@ void* ipc_listener(void* arg)
     }
 }
 
-// -------- REMOVE CLIENT --------
 void remove_client(int sock)
 {
     pthread_mutex_lock(&clients_mutex);
@@ -68,7 +67,6 @@ void remove_client(int sock)
     pthread_mutex_unlock(&clients_mutex);
 }
 
-// -------- BROADCAST --------
 void broadcast(char *msg)
 {
     pthread_mutex_lock(&clients_mutex);
@@ -88,7 +86,6 @@ void broadcast(char *msg)
     pthread_mutex_unlock(&clients_mutex);
 }
 
-// -------- STORY --------
 void send_story(int sock)
 {
     char *lines[]={
@@ -108,7 +105,6 @@ void send_story(int sock)
     }
 }
 
-// -------- BARRIER --------
 void wait_for_players(Player *player)
 {
     int sock=player->socket;
@@ -138,7 +134,6 @@ void wait_for_players(Player *player)
     send(sock,"\nAll players ready. Entering Demon Castle...\n",49,0);
 }
 
-// -------- DEMON FIGHT --------
 void demon_fight(Player *player)
 {
     char buffer[1024];
@@ -196,10 +191,18 @@ void demon_fight(Player *player)
 
         int damage;
 
-        if(player->role==WARRIOR)
-            damage=rand()%15+5;
-        else
+        if(player->hasSword)
+        {
+            damage=rand()%20+15;
+        }
+        else if(player->hasSpear)
+        {
+            damage=rand()%15+10;
+        }
+        else if(player->hasStaff)
+        {
             damage=rand()%20+10;
+        }
 
         pthread_mutex_lock(&demon_mutex);
 
@@ -218,7 +221,6 @@ void demon_fight(Player *player)
 
             broadcast("Demon King defeated.\n");
 
-            // -------- IPC SEND --------
             struct msgbuf msg;
             msg.mtype=1;
             strcpy(msg.mtext,"Demon King defeated");
@@ -249,7 +251,6 @@ void demon_fight(Player *player)
     }
 }
 
-// -------- CLIENT THREAD --------
 void* handle_client(void* arg)
 {
     Player *player=(Player*)arg;
@@ -281,7 +282,6 @@ void* handle_client(void* arg)
     return NULL;
 }
 
-// -------- MAIN --------
 int main()
 {
     int server_fd;
@@ -290,7 +290,6 @@ int main()
 
     srand(time(NULL));
 
-    // -------- IPC INIT --------
     msgid=msgget(1234,0666|IPC_CREAT);
 
     pthread_t ipc_thread;
@@ -348,6 +347,7 @@ int main()
         player->socket=client_socket;
         player->hasSword=0;
         player->hasStaff=0;
+        player->hasSpear=0;
         player->hp=100;
 
         if(thread_count<MAX_CLIENTS)
