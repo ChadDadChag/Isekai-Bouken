@@ -92,7 +92,7 @@ void send_story(int sock)
         "\n--- THE VOID ---\n",
         "You awaken in an endless void...\n",
         "A voice echoes around you...\n\n",
-        "Goddess: You have been reincarnated.\n",
+        "Goddess: You have been summoned to be a hero and save humanity from destruction.\n",
         "Goddess: The Demon King threatens this world.\n",
         "Goddess: Prepare yourself before battle.\n\n",
         "Teleporting you to the Armory...\n\n"
@@ -151,15 +151,6 @@ void demon_fight(Player *player)
             break;
         }
 
-        pthread_mutex_lock(&demon_mutex);
-        if(demon_hp<=0)
-        {
-            pthread_mutex_unlock(&demon_mutex);
-            send(sock,"Demon King already defeated.\n",30,0);
-            break;
-        }
-        pthread_mutex_unlock(&demon_mutex);
-
         int current_hp;
 
         pthread_mutex_lock(&demon_mutex);
@@ -170,7 +161,14 @@ void demon_fight(Player *player)
         snprintf(status,sizeof(status),"\nYour HP: %d | Demon HP: %d\n",player->hp,current_hp);
         send(sock,status,strlen(status),0);
 
-        send(sock,"Enter action (1 or chat <msg>): ",32,0);
+        if(player->role==WARRIOR)
+        {
+            send(sock,"Enter action (Divine_Strike or chat <msg>): \n",46,0);
+        }
+        else
+        {
+            send(sock,"Enter action (Cast_Fireball or chat <msg>): \n",46,0);
+        }
 
         memset(buffer,0,sizeof(buffer));
         if(recv(sock,buffer,sizeof(buffer),0)<=0)
@@ -186,6 +184,18 @@ void demon_fight(Player *player)
             char msg[200];
             snprintf(msg,sizeof(msg),"[CHAT] %s: %s\n",player->name,buffer+5);
             broadcast(msg);
+            continue;
+        }
+        else if(strncmp(buffer,"Divine_Strike",13)==0)
+        {
+            send(sock,"Your Divine Strike landed on the Demon\n",39,0);
+        }
+        else if(strncmp(buffer,"Cast_Fireball",13)==0)
+        {
+            send(sock,"Your Fireball landed on the Demon\n",34,0);
+        }
+        else
+        {
             continue;
         }
 
@@ -209,6 +219,10 @@ void demon_fight(Player *player)
         if(demon_hp>0)
         {
             demon_hp-=damage;
+            if(demon_hp<0)
+            {
+                demon_hp=0;
+            }
 
             char msg[150];
             snprintf(msg,sizeof(msg),"%s dealt %d damage. Demon HP = %d\n",player->name,damage,demon_hp);
@@ -251,6 +265,30 @@ void demon_fight(Player *player)
     }
 }
 
+void send_ending(int sock)
+{
+    char *lines[]={
+        "Congratulations!\n",
+        "You and your party have defeated the Demon.\n",
+        "Everyone praises your party as the heroes who have saved humanity.\n",
+        "You have now fulfilled your purpose and can go back to your world.\n",
+        "\n--- VOID ---\n",
+        "You once again awaken in an endless void...\n",
+        "A voice echoes around you...\n\n",
+        "Goddess: Thank you O Brave Soul\n",
+        "...\n",
+        "..\n",
+        ".\n",
+        "Suddenly you are back in Prof Thangu's class and your life returns back to normal.\n"
+    };
+
+    for(int i=0;i<12;i++)
+    {
+        send(sock,lines[i],strlen(lines[i]),0);
+        sleep(1);
+    }
+}
+
 void* handle_client(void* arg)
 {
     Player *player=(Player*)arg;
@@ -267,6 +305,8 @@ void* handle_client(void* arg)
     sleep(1);
 
     demon_fight(player);
+
+    send_ending(sock);
 
     if(player->hp>0)
     {

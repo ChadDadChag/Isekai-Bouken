@@ -25,7 +25,14 @@ void save_to_file(Player *player)
     fcntl(fd,F_SETLKW,&lock);
 
     char buffer[200];
-    snprintf(buffer,sizeof(buffer),"Player %s won as role %d\n",player->name,player->role);
+    if(player->role==WARRIOR)
+    {
+        snprintf(buffer,sizeof(buffer),"Player %s won as role Warrior\n",player->name);
+    }
+    else
+    {
+        snprintf(buffer,sizeof(buffer),"Player %s won as role Mage\n",player->name);
+    }
 
     write(fd,buffer,strlen(buffer));
 
